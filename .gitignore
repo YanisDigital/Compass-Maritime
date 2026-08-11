@@ -15,9 +15,6 @@ src-tauri/gen/
 /android/
 /ios/
 
-# The reference spreadsheet is held locally, not published. See README.
-Refrences/
-
 # Editors and OS
 .DS_Store
 Thumbs.db

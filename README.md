@@ -61,11 +61,14 @@ src-tauri         Windows desktop shell. Wraps the built web bundle in a native 
 capacitor.config  Android and iOS shells. Wrap the same bundle.
 release           The single-file build, ready to hand to somebody.
 scripts           Icon generation and the single-file build.
+Refrences         The spreadsheet the formulas were taken from.
 ```
 
-`Refrences/NavCAlExcel.xls` — the spreadsheet the formulas were taken from — is kept out of
-this repository and held locally. The tests in `packages/core/test/workbook.ts` quote every
-value from it that they depend on, so the suite runs without it.
+The tests in `packages/core/test/workbook.ts` quote every value from that spreadsheet that
+they depend on, so the suite runs without opening it.
+
+> This repository is private. It carries a third-party navigation spreadsheet in
+> `Refrences/`; check its provenance before making the repository public.
 
 The interface never does astronomy. It calls one function —
 `calculateCompassError(input)` — and formats what comes back. Every delivery target runs the
