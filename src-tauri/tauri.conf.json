@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Compass Error",
+  "version": "0.1.0",
+  "identifier": "com.compassmaritime.compasserror",
+  "build": {
+    "frontendDist": "../apps/web/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev --workspace apps/web",
+    "beforeBuildCommand": "npm run build --workspace apps/web"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Compass Error",
+        "width": 480,
+        "height": 900,
+        "minWidth": 360,
+        "minHeight": 560,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "shortDescription": "Gyro and magnetic compass error from a celestial observation",
+    "longDescription": "Works the gyro compass error and the magnetic compass deviation from an observed bearing of the Sun, Moon, a planet or a navigational star, and keeps the results in Compass Error Book form. Runs entirely offline."
+  }
+}

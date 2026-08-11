@@ -1,0 +1,9 @@
+# Normalise to LF in the repository so the same files check out identically on Windows,
+# macOS and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.svg text eol=lf
+*.xls binary
+*.woff2 binary
