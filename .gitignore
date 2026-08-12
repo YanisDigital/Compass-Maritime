@@ -9,3 +9,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Agent tooling installed into the working copy, not part of the application
+.agents/
+.claude/skills/
+skills-lock.json
