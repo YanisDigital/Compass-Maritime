@@ -1,10 +1,10 @@
-import { Segmented } from '../components/Fields';
+import { Hemisphere, Segmented } from '../components/Fields';
 import type { Settings, Theme } from '../settings';
 
 const THEMES: ReadonlyArray<{ value: Theme; label: string }> = [
   { value: 'auto', label: 'Auto' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Day' },
+  { value: 'dark', label: 'Dusk' },
   { value: 'night', label: 'Night' },
 ];
 
@@ -15,31 +15,35 @@ interface Props {
 
 export function SettingsScreen({ settings, onChange }: Props) {
   return (
-    <>
-      <section className="card">
-        <h2>Vessel</h2>
+    <div className="settings">
+      <section className="panel">
+        <h2 className="panel-title">Vessel</h2>
         <div className="field">
-          <label htmlFor="ship">Ship's name</label>
+          <label className="field-label" htmlFor="ship">
+            Ship's name
+          </label>
           <input
             id="ship"
+            className="control"
             type="text"
             value={settings.ship}
             placeholder="MV …"
             onChange={(event) => onChange({ ship: event.target.value })}
           />
         </div>
-        <p className="muted" style={{ fontSize: '0.8rem', margin: '10px 0 0' }}>
+        <p className="panel-note">
           Shown in the heading, so it is clear which ship the application is set up for.
         </p>
       </section>
 
-      <section className="card">
-        <h2>Defaults</h2>
+      <section className="panel">
+        <h2 className="panel-title">Defaults</h2>
         <div className="field">
-          <span className="legend">Variation for this area</span>
-          <div className="angle" style={{ gridTemplateColumns: '1fr auto' }}>
-            <span className="unit" data-unit="°">
+          <span className="field-label">Variation for this area</span>
+          <div className="angle angle--single">
+            <span className="marked" data-mark="°">
               <input
+                className="control control--figure"
                 type="text"
                 inputMode="decimal"
                 aria-label="Default variation"
@@ -47,48 +51,44 @@ export function SettingsScreen({ settings, onChange }: Props) {
                 onChange={(event) => onChange({ defaultVariation: event.target.value })}
               />
             </span>
-            <div className="segmented compact" role="group" aria-label="East or west">
-              {(['E', 'W'] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={settings.defaultVariationEW === option}
-                  onClick={() => onChange({ defaultVariationEW: option })}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
+            <Hemisphere
+              options={['E', 'W']}
+              value={settings.defaultVariationEW}
+              onChange={(value) => onChange({ defaultVariationEW: value as 'E' | 'W' })}
+              label="East or west"
+            />
           </div>
         </div>
-        <p className="muted" style={{ fontSize: '0.8rem', margin: '10px 0 0' }}>
-          Used to fill the variation field when the Calculate tab is first opened.
-        </p>
+        <p className="panel-note">Fills the variation field when the application is opened.</p>
       </section>
 
-      <section className="card">
-        <h2>Display</h2>
+      <section className="panel">
+        <h2 className="panel-title">Lighting</h2>
         <Segmented
           value={settings.theme}
           options={THEMES}
           onChange={(theme) => onChange({ theme })}
-          compact
+          tight
         />
-        <p className="muted" style={{ fontSize: '0.8rem', margin: '10px 0 0' }}>
+        <p className="panel-note">
           Night is red on black, to preserve dark adaptation on a darkened bridge.
         </p>
       </section>
 
-      <section className="card">
-        <h2>About</h2>
-        <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Compass Error Calculator. Positions of the Sun, Moon and planets are computed with
-          Astronomy Engine; the 57 navigational stars and Polaris are reduced from a catalog of
-          mean ecliptic coordinates of J2000.0. Observations are not stored — the result is
-          worked for entering by hand in the ship's Compass Error Book. Results are for checking
-          the compasses and do not replace the Nautical Almanac as the ship's official source.
+      <section className="panel">
+        <h2 className="panel-title">About</h2>
+        <p className="prose">
+          Positions of the Sun, Moon and planets are computed with Astronomy Engine; the 57
+          navigational stars and Polaris are reduced from a catalog of mean ecliptic coordinates
+          of J2000.0. Observations are not stored — the result is worked for entering by hand in
+          the ship's Compass Error Book.
+        </p>
+        <p className="prose" style={{ marginTop: 10 }}>
+          This works the compasses. It does not replace the Nautical Almanac as the ship's
+          official source, and the officer of the watch remains responsible for the entry made in
+          the book.
         </p>
       </section>
-    </>
+    </div>
   );
 }

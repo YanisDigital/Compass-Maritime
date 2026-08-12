@@ -5,7 +5,7 @@ interface SegmentedProps<T extends string> {
   options: ReadonlyArray<{ value: T; label: string }>;
   onChange: (value: T) => void;
   label?: string;
-  compact?: boolean;
+  tight?: boolean;
 }
 
 export function Segmented<T extends string>({
@@ -13,12 +13,16 @@ export function Segmented<T extends string>({
   options,
   onChange,
   label,
-  compact,
+  tight,
 }: SegmentedProps<T>) {
   return (
     <div className="field">
-      {label ? <span className="legend">{label}</span> : null}
-      <div className={compact ? 'segmented compact' : 'segmented'} role="group" aria-label={label}>
+      {label ? <span className="field-label">{label}</span> : null}
+      <div
+        className={tight ? 'segmented segmented--tight' : 'segmented'}
+        role="group"
+        aria-label={label}
+      >
         {options.map((option) => (
           <button
             key={option.value}
@@ -34,36 +38,63 @@ export function Segmented<T extends string>({
   );
 }
 
+/** The East/West or North/South chooser that finishes an angle. */
+export function Hemisphere({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: readonly [string, string];
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="segmented segmented--tight" role="group" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={option === value}
+          onClick={() => onChange(option)}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 interface NumberFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  unit?: string;
-  placeholder?: string;
+  mark?: string;
   error?: string;
-  hint?: ReactNode;
 }
 
-export function NumberField({ label, value, onChange, unit, placeholder, error, hint }: NumberFieldProps) {
+export function NumberField({ label, value, onChange, mark, error }: NumberFieldProps) {
   const id = useId();
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <div className="unit" data-unit={unit}>
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <span className="marked" data-mark={mark}>
         <input
           id={id}
+          className={mark ? 'control control--figure' : 'control'}
           type="text"
           inputMode="decimal"
           autoComplete="off"
           aria-label={label}
           value={value}
-          placeholder={placeholder}
           aria-invalid={error ? true : undefined}
           onChange={(event) => onChange(event.target.value)}
-          style={unit ? { paddingRight: 26, textAlign: 'right' } : undefined}
         />
-      </div>
-      {error ? <span className="note error">{error}</span> : hint}
+      </span>
+      {error ? <span className="note note--bad">{error}</span> : null}
     </div>
   );
 }
@@ -94,10 +125,11 @@ export function AngleField({
 }: AngleFieldProps) {
   return (
     <div className="field">
-      <span className="legend">{label}</span>
+      <span className="field-label">{label}</span>
       <div className="angle">
-        <span className="unit" data-unit="°">
+        <span className="marked" data-mark="°">
           <input
+            className="control control--figure"
             type="text"
             inputMode="decimal"
             autoComplete="off"
@@ -107,8 +139,9 @@ export function AngleField({
             onChange={(event) => onDegrees(event.target.value)}
           />
         </span>
-        <span className="unit" data-unit="′">
+        <span className="marked" data-mark="′">
           <input
+            className="control control--figure"
             type="text"
             inputMode="decimal"
             autoComplete="off"
@@ -117,38 +150,37 @@ export function AngleField({
             onChange={(event) => onMinutes(event.target.value)}
           />
         </span>
-        <div className="segmented compact" role="group" aria-label={`${label} hemisphere`}>
-          {hemispheres.map((option) => (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={option === hemisphere}
-              onClick={() => onHemisphere(option)}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
+        <Hemisphere
+          options={hemispheres}
+          value={hemisphere}
+          onChange={onHemisphere}
+          label={`${label} hemisphere`}
+        />
       </div>
-      {error ? <span className="note error">{error}</span> : null}
+      {error ? <span className="note note--bad">{error}</span> : null}
     </div>
   );
 }
 
-export function Readout({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
+/** One ruled line of the readout, in the order the book asks for it. */
+export function LedgerRow({
+  label,
+  value,
+  name,
+  principal,
+}: {
+  label: string;
+  value: ReactNode;
+  name?: string;
+  principal?: boolean;
+}) {
   return (
-    <div className={wide ? 'readout wide' : 'readout'}>
-      <div className="k">{label}</div>
-      <div className="v">{value}</div>
-    </div>
-  );
-}
-
-export function Row({ label, value, strong }: { label: string; value: ReactNode; strong?: boolean }) {
-  return (
-    <div className={strong ? 'row strong' : 'row'}>
-      <span className="k">{label}</span>
-      <span className="v">{value}</span>
+    <div className={principal ? 'ledger-row ledger-row--principal' : 'ledger-row'}>
+      <span className="ledger-key">{label}</span>
+      <span className="ledger-value">
+        {value}
+        {name ? <span className="ledger-name">{name}</span> : null}
+      </span>
     </div>
   );
 }

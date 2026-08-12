@@ -2,13 +2,13 @@ import {
   calculateCompassError,
   formatBearing,
   formatDeclination,
-  formatEastWest,
   formatHourAngle,
   STAR_CATALOG,
 } from '@compass/core';
-import type { CompassErrorResult } from '@compass/core';
+import type { CompassErrorResult, EastWestAngle } from '@compass/core';
 import { useMemo } from 'react';
-import { AngleField, NumberField, Readout, Row, Segmented } from '../components/Fields';
+import { BearingScale } from '../components/BearingScale';
+import { AngleField, Hemisphere, LedgerRow, NumberField, Segmented } from '../components/Fields';
 import { BODY_LABELS, parseForm, utcToFields, type BodyChoice, type FormState } from '../form';
 
 const BODY_OPTIONS = (Object.keys(BODY_LABELS) as BodyChoice[]).map((value) => ({
@@ -21,8 +21,11 @@ const METHOD_OPTIONS = [
   { value: 'amplitude' as const, label: 'Amplitude' },
 ];
 
+/** The magnitude of an East/West angle. Its name is set separately, and larger. */
+const figure = (angle: EastWestAngle) => `${angle.degrees.toFixed(1)}°`;
+
 interface Props {
-  /** Held by the App so that a trip to the Settings tab does not discard what was typed. */
+  /** Held by the App so that a trip to Settings does not discard what was typed. */
   form: FormState;
   onForm: (next: (current: FormState) => FormState) => void;
 }
@@ -41,232 +44,301 @@ export function Calculate({ form, onForm }: Props) {
     }
   }, [input]);
 
+  const bodyName = form.bodyKind === 'star' ? form.starName : BODY_LABELS[form.bodyKind];
+
   return (
     <>
-      <section className="card">
-        <h2>Time of observation (UTC)</h2>
-        <div className="grid two">
-          <div className="field">
-            <label htmlFor="date">Date</label>
-            <input
-              id="date"
-              type="date"
-              value={form.date}
-              onChange={(event) => set({ date: event.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="time">Time</label>
-            <input
-              id="time"
-              type="time"
-              step={1}
-              value={form.time}
-              onChange={(event) => set({ time: event.target.value })}
-            />
-          </div>
-        </div>
-        <div className="btn-row end" style={{ marginTop: 10 }}>
-          <button type="button" className="btn small" onClick={() => set(utcToFields(new Date()))}>
-            Now
-          </button>
-        </div>
-        {errors.date ? <p className="note error">{errors.date}</p> : null}
-      </section>
+      {/* On a phone this wrapper dissolves so the pinned error, the controls and the full
+          reading can be ordered independently; on a wide screen it is the sticky column. */}
+      <div className="readout-col">
+        {result ? (
+          <Instrument
+            result={result}
+            gyroBearing={input!.gyroBearing}
+            body={bodyName}
+            method={form.method === 'amplitude' ? 'Amplitude' : 'Azimuth'}
+          />
+        ) : (
+          <section className="instrument">
+            <span className="plate-label">Gyro error</span>
+            <p className="instrument-empty">— · —</p>
+            <p className="instrument-hint">
+              {failure ?? 'Enter the position, the time and the gyro bearing.'}
+            </p>
+          </section>
+        )}
+        {result ? <Reading result={result} isStar={form.bodyKind === 'star'} /> : null}
+      </div>
 
-      <section className="card">
-        <h2>Ship's position</h2>
-        <div className="grid">
-          <AngleField
-            label="Latitude"
-            degrees={form.latDeg}
-            minutes={form.latMin}
-            hemisphere={form.latNS}
-            hemispheres={['N', 'S']}
-            onDegrees={(latDeg) => set({ latDeg })}
-            onMinutes={(latMin) => set({ latMin })}
-            onHemisphere={(value) => set({ latNS: value as 'N' | 'S' })}
-            error={errors.latDeg ?? errors.latMin}
-          />
-          <AngleField
-            label="Longitude"
-            degrees={form.lonDeg}
-            minutes={form.lonMin}
-            hemisphere={form.lonEW}
-            hemispheres={['E', 'W']}
-            onDegrees={(lonDeg) => set({ lonDeg })}
-            onMinutes={(lonMin) => set({ lonMin })}
-            onHemisphere={(value) => set({ lonEW: value as 'E' | 'W' })}
-            error={errors.lonDeg ?? errors.lonMin}
-          />
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Body observed</h2>
-        <Segmented
-          value={form.bodyKind}
-          options={BODY_OPTIONS}
-          onChange={(bodyKind) => set({ bodyKind })}
-          compact
-        />
-        {form.bodyKind === 'star' ? (
-          <div className="field" style={{ marginTop: 10 }}>
-            <label htmlFor="star">Star</label>
-            <select
-              id="star"
-              value={form.starName}
-              onChange={(event) => set({ starName: event.target.value })}
-            >
-              {STAR_CATALOG.map((star) => (
-                <option key={star.code} value={star.name}>
-                  {star.name}
-                </option>
-              ))}
-            </select>
+      <div className="controls-col">
+        <section className="panel">
+          <div className="panel-head">
+            <h2 className="panel-title">Time of observation · UTC</h2>
+            <button type="button" className="btn" onClick={() => set(utcToFields(new Date()))}>
+              Now
+            </button>
           </div>
-        ) : null}
-        <div style={{ marginTop: 10 }}>
-          <Segmented
-            label="Method"
-            value={form.method}
-            options={METHOD_OPTIONS}
-            onChange={(method) => set({ method })}
-          />
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Compass readings</h2>
-        <div className="grid two">
-          <NumberField
-            label="Gyro bearing"
-            unit="°"
-            value={form.gyroBearing}
-            onChange={(gyroBearing) => set({ gyroBearing })}
-            error={errors.gyroBearing}
-          />
-          <NumberField
-            label="Ship's head by gyro"
-            unit="°"
-            value={form.gyroCourse}
-            onChange={(gyroCourse) => set({ gyroCourse })}
-            error={errors.gyroCourse}
-          />
-          <NumberField
-            label="Ship's head by magnetic"
-            unit="°"
-            value={form.magneticCourse}
-            onChange={(magneticCourse) => set({ magneticCourse })}
-            error={errors.magneticCourse}
-          />
-          <div className="field">
-            <span className="legend">Variation (chart)</span>
-            <div className="angle" style={{ gridTemplateColumns: '1fr auto' }}>
-              <span className="unit" data-unit="°">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  aria-label="Variation"
-                  value={form.variation}
-                  onChange={(event) => set({ variation: event.target.value })}
-                />
-              </span>
-              <div className="segmented compact" role="group" aria-label="Variation east or west">
-                {(['E', 'W'] as const).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    aria-pressed={form.variationEW === option}
-                    onClick={() => set({ variationEW: option })}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
+          <div className="pair">
+            <div className="field">
+              <label className="field-label" htmlFor="date">
+                Date
+              </label>
+              <input
+                id="date"
+                className="control"
+                type="date"
+                value={form.date}
+                onChange={(event) => set({ date: event.target.value })}
+              />
             </div>
-            {errors.variation ? <span className="note error">{errors.variation}</span> : null}
+            <div className="field">
+              <label className="field-label" htmlFor="time">
+                Time
+              </label>
+              <input
+                id="time"
+                className="control"
+                type="time"
+                step={1}
+                value={form.time}
+                onChange={(event) => set({ time: event.target.value })}
+              />
+            </div>
           </div>
-        </div>
-        <p className="muted" style={{ fontSize: '0.8rem', margin: '10px 0 0' }}>
-          Leave the courses blank to work the gyro error alone.
-        </p>
-      </section>
-
-      {failure ? <p className="note error">{failure}</p> : null}
-
-      {result ? (
-        <ResultCard result={result} isStar={form.bodyKind === 'star'} />
-      ) : (
-        <section className="card">
-          <p className="empty" style={{ padding: 20 }}>
-            Enter the position, the time and the gyro bearing to work the error.
-          </p>
+          {errors.date ? <p className="note note--bad">{errors.date}</p> : null}
         </section>
-      )}
+
+        <section className="panel">
+          <h2 className="panel-title">Ship's position</h2>
+          <div className="stack">
+            <AngleField
+              label="Latitude"
+              degrees={form.latDeg}
+              minutes={form.latMin}
+              hemisphere={form.latNS}
+              hemispheres={['N', 'S']}
+              onDegrees={(latDeg) => set({ latDeg })}
+              onMinutes={(latMin) => set({ latMin })}
+              onHemisphere={(value) => set({ latNS: value as 'N' | 'S' })}
+              error={errors.latDeg ?? errors.latMin}
+            />
+            <AngleField
+              label="Longitude"
+              degrees={form.lonDeg}
+              minutes={form.lonMin}
+              hemisphere={form.lonEW}
+              hemispheres={['E', 'W']}
+              onDegrees={(lonDeg) => set({ lonDeg })}
+              onMinutes={(lonMin) => set({ lonMin })}
+              onHemisphere={(value) => set({ lonEW: value as 'E' | 'W' })}
+              error={errors.lonDeg ?? errors.lonMin}
+            />
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2 className="panel-title">Body observed</h2>
+          <div className="stack">
+            <Segmented
+              value={form.bodyKind}
+              options={BODY_OPTIONS}
+              onChange={(bodyKind) => set({ bodyKind })}
+              tight
+            />
+            {form.bodyKind === 'star' ? (
+              <div className="field">
+                <label className="field-label" htmlFor="star">
+                  Star
+                </label>
+                <select
+                  id="star"
+                  className="control"
+                  value={form.starName}
+                  onChange={(event) => set({ starName: event.target.value })}
+                >
+                  {STAR_CATALOG.map((star) => (
+                    <option key={star.code} value={star.name}>
+                      {star.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            <Segmented
+              label="Method"
+              value={form.method}
+              options={METHOD_OPTIONS}
+              onChange={(method) => set({ method })}
+            />
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2 className="panel-title">Compass readings</h2>
+          <div className="pair">
+            <NumberField
+              label="Gyro bearing"
+              mark="°"
+              value={form.gyroBearing}
+              onChange={(gyroBearing) => set({ gyroBearing })}
+              error={errors.gyroBearing}
+            />
+            <NumberField
+              label="Ship's head by gyro"
+              mark="°"
+              value={form.gyroCourse}
+              onChange={(gyroCourse) => set({ gyroCourse })}
+              error={errors.gyroCourse}
+            />
+            <NumberField
+              label="Ship's head by magnetic"
+              mark="°"
+              value={form.magneticCourse}
+              onChange={(magneticCourse) => set({ magneticCourse })}
+              error={errors.magneticCourse}
+            />
+            <div className="field">
+              <span className="field-label">Variation from the chart</span>
+              <div className="angle angle--single">
+                <span className="marked" data-mark="°">
+                  <input
+                    className="control control--figure"
+                    type="text"
+                    inputMode="decimal"
+                    aria-label="Variation"
+                    value={form.variation}
+                    onChange={(event) => set({ variation: event.target.value })}
+                  />
+                </span>
+                <Hemisphere
+                  options={['E', 'W']}
+                  value={form.variationEW}
+                  onChange={(value) => set({ variationEW: value as 'E' | 'W' })}
+                  label="Variation east or west"
+                />
+              </div>
+              {errors.variation ? <span className="note note--bad">{errors.variation}</span> : null}
+            </div>
+          </div>
+          <p className="panel-note">Leave the courses blank to work the gyro error alone.</p>
+        </section>
+      </div>
     </>
   );
 }
 
-function ResultCard({ result, isStar }: { result: CompassErrorResult; isStar: boolean }) {
-  const { celestial, working } = result;
-
+/** The pinned face: the error itself, and the geometry that produced it. */
+function Instrument({
+  result,
+  gyroBearing,
+  body,
+  method,
+}: {
+  result: CompassErrorResult;
+  gyroBearing: number;
+  body: string;
+  method: string;
+}) {
   return (
-    <section className="card result">
-      <h2>Result</h2>
+    <section className="instrument instrument--live">
+      <span className="plate-label">Gyro error</span>
+      <div className="principal">
+        <p className="principal-value">
+          {figure(result.gyroError)}
+          <span className="principal-name">{result.gyroError.name}</span>
+        </p>
+        <p className="principal-aside">
+          <b>{body}</b>
+          {method}
+        </p>
+      </div>
+
+      <BearingScale trueBearing={result.trueBearing} gyroBearing={gyroBearing} />
+
+      <div className="scale-key">
+        <span className="scale-key--true">
+          <i>True</i> <b>{formatBearing(result.trueBearing)}</b>
+        </span>
+        <span>
+          <i>Gyro</i> <b>{formatBearing(gyroBearing)}</b>
+        </span>
+      </div>
 
       {result.warnings.map((warning) => (
-        <p className="note warn" key={warning}>
+        <p className="note note--warn" key={warning}>
           {warning}
         </p>
       ))}
+    </section>
+  );
+}
 
-      <div className="headline">
-        <Readout label="True bearing" value={formatBearing(result.trueBearing)} />
-        <Readout label="Gyro error" value={formatEastWest(result.gyroError)} />
-      </div>
+/** The rest of the line, and the working behind it. */
+function Reading({ result, isStar }: { result: CompassErrorResult; isStar: boolean }) {
+  const { celestial, working } = result;
+
+  return (
+    <section className="reading">
+      <span className="plate-label">Reading</span>
 
       {result.trueCourse !== undefined ? (
-        <div className="rows">
-          <Row label="True course" value={formatBearing(result.trueCourse)} strong />
+        <div className="ledger">
+          <LedgerRow label="True course" value={formatBearing(result.trueCourse)} />
           {result.totalError ? (
-            <Row label="Total (compass) error" value={formatEastWest(result.totalError)} strong />
+            <LedgerRow
+              label="Compass error"
+              value={figure(result.totalError)}
+              name={result.totalError.name}
+            />
           ) : null}
-          {result.variation ? <Row label="Variation" value={formatEastWest(result.variation)} /> : null}
+          {result.variation ? (
+            <LedgerRow
+              label="Variation"
+              value={figure(result.variation)}
+              name={result.variation.name}
+            />
+          ) : null}
           {result.deviation ? (
-            <Row label="Deviation" value={formatEastWest(result.deviation)} strong />
+            <LedgerRow
+              label="Deviation"
+              value={figure(result.deviation)}
+              name={result.deviation.name}
+              principal
+            />
           ) : null}
         </div>
       ) : null}
 
       <details className="working">
         <summary>Working</summary>
-        <div className="rows" style={{ marginTop: 8 }}>
+        <div className="ledger">
           {isStar && celestial.ghaAries !== undefined ? (
-            <Row label="GHA Aries" value={formatHourAngle(celestial.ghaAries)} />
+            <LedgerRow label="GHA Aries" value={formatHourAngle(celestial.ghaAries)} />
           ) : null}
           {isStar && celestial.sha !== undefined ? (
-            <Row label="SHA" value={formatHourAngle(celestial.sha)} />
+            <LedgerRow label="SHA" value={formatHourAngle(celestial.sha)} />
           ) : null}
-          <Row label="GHA" value={formatHourAngle(celestial.gha)} />
-          <Row label="Declination" value={formatDeclination(celestial.dec)} />
-          <Row
+          <LedgerRow label="GHA" value={formatHourAngle(celestial.gha)} />
+          <LedgerRow label="Declination" value={formatDeclination(celestial.dec)} />
+          <LedgerRow
             label="LHA"
-            value={`${formatHourAngle(celestial.lha)} ${celestial.lha > 180 ? 'E' : 'W'}`}
+            value={formatHourAngle(celestial.lha)}
+            name={celestial.lha > 180 ? 'E' : 'W'}
           />
-          <Row label="Calculated altitude" value={`${celestial.altitude.toFixed(1)}°`} />
+          <LedgerRow label="Calculated altitude" value={`${celestial.altitude.toFixed(1)}°`} />
           {working.method === 'azimuth' ? (
             <>
-              <Row label="A" value={`${working.A.value.toFixed(3)} ${working.A.name}`} />
-              <Row label="B" value={`${working.B.value.toFixed(3)} ${working.B.name}`} />
-              <Row label="C" value={`${working.C.value.toFixed(3)} ${working.C.name}`} />
+              <LedgerRow label="A" value={working.A.value.toFixed(3)} name={working.A.name} />
+              <LedgerRow label="B" value={working.B.value.toFixed(3)} name={working.B.name} />
+              <LedgerRow label="C" value={working.C.value.toFixed(3)} name={working.C.name} />
             </>
           ) : (
             <>
-              <Row label="Amplitude" value={`${working.amplitude.toFixed(1)}°`} />
-              <Row
-                label="Quadrant"
-                value={`${working.quadrant} (${working.risingSetting === 'E' ? 'rising' : 'setting'})`}
+              <LedgerRow label="Amplitude" value={`${working.amplitude.toFixed(1)}°`} />
+              <LedgerRow
+                label="Rising or setting"
+                value={working.risingSetting === 'E' ? 'Rising' : 'Setting'}
+                name={working.quadrant}
               />
             </>
           )}
