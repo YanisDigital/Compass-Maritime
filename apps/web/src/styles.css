@@ -489,52 +489,10 @@ details.working[open] > summary::before {
   padding: 36px 12px;
 }
 
-/* ------------------------------------------------------------------- log -- */
-
-.entry {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  margin-bottom: 10px;
-}
-
-.entry-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.entry-when {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.entry-body {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.chip {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-}
-
 /* ----------------------------------------------------------------- print -- */
 
+/* Nothing here is meant to be printed — the result is copied into the paper book by
+   hand — but a working sheet on plain paper should still come out legible. */
 @media print {
   :root {
     --bg: #fff;
@@ -554,44 +512,6 @@ details.working[open] > summary::before {
     max-width: none;
     padding: 0;
   }
-
-  table.book {
-    font-size: 8pt;
-  }
-}
-
-table.book {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-}
-
-table.book th,
-table.book td {
-  border: 1px solid var(--border);
-  padding: 4px 6px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-table.book th {
-  background: var(--surface-2);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-table.book td:first-child,
-table.book th:first-child,
-table.book td.left {
-  text-align: left;
-}
-
-.scroll-x {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 420px) {

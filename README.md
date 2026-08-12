@@ -26,8 +26,8 @@ The working — GHA, declination, LHA, calculated altitude and the A/B/C quantit
 azimuth tables — is shown alongside, so the result can be checked against the printed tables
 by hand.
 
-Every observation can be saved to a log held on the device and exported as CSV or printed in
-Compass Error Book column order.
+Nothing is stored. The Compass Error Book is kept on paper, so the application works the
+observation and shows it; the officer writes it into the book.
 
 **Bodies:** Sun, Moon, Venus, Mars, Jupiter, Saturn, the 57 navigational stars and Polaris.
 
@@ -115,10 +115,9 @@ Produces `release/compass-error.html`, about 230 kB, with every script, style an
 inlined. Copy it anywhere — a USB stick, an email attachment, the ship's shared
 drive — and double-click it. No install, no server, no Node, no administrator rights.
 
-Verified in Chromium opened straight from `file://`: the calculation, the saved log and the
-CSV export all work, and the log survives a reload. Firefox and Safari apply their own rules
-to local files and have not been tested; if the log does not stick there, the calculations
-still do.
+Verified in Chromium opened straight from `file://`. The application holds no data of its
+own beyond the handful of settings on the Settings tab, so there is nothing that can fail to
+save.
 
 There is no service worker in this build and no update mechanism — reissue the file to
 update it.

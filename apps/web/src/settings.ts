@@ -4,7 +4,6 @@ export type Theme = 'auto' | 'light' | 'dark' | 'night';
 
 export interface Settings {
   ship: string;
-  observer: string;
   defaultVariation: string;
   defaultVariationEW: 'E' | 'W';
   theme: Theme;
@@ -12,7 +11,6 @@ export interface Settings {
 
 const DEFAULTS: Settings = {
   ship: '',
-  observer: '',
   defaultVariation: '',
   defaultVariationEW: 'E',
   theme: 'auto',

@@ -7,12 +7,9 @@ import {
   STAR_CATALOG,
 } from '@compass/core';
 import type { CompassErrorResult } from '@compass/core';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { AngleField, NumberField, Readout, Row, Segmented } from '../components/Fields';
 import { BODY_LABELS, parseForm, utcToFields, type BodyChoice, type FormState } from '../form';
-import { toRecord } from '../observation';
-import type { Settings } from '../settings';
-import { saveObservation } from '../storage/db';
 
 const BODY_OPTIONS = (Object.keys(BODY_LABELS) as BodyChoice[]).map((value) => ({
   value,
@@ -25,20 +22,13 @@ const METHOD_OPTIONS = [
 ];
 
 interface Props {
-  settings: Settings;
-  /** Held by the App so that a trip to the Log tab does not discard what was typed. */
+  /** Held by the App so that a trip to the Settings tab does not discard what was typed. */
   form: FormState;
   onForm: (next: (current: FormState) => FormState) => void;
-  saved: boolean;
-  onSavedChange: (saved: boolean) => void;
-  onSaved: () => void;
 }
 
-export function Calculate({ settings, form, onForm, saved, onSavedChange, onSaved }: Props) {
-  const set = (patch: Partial<FormState>) => {
-    onForm((current) => ({ ...current, ...patch }));
-    onSavedChange(false);
-  };
+export function Calculate({ form, onForm }: Props) {
+  const set = (patch: Partial<FormState>) => onForm((current) => ({ ...current, ...patch }));
 
   const { input, errors } = useMemo(() => parseForm(form), [form]);
 
@@ -50,24 +40,6 @@ export function Calculate({ settings, form, onForm, saved, onSavedChange, onSave
       return { failure: thrown instanceof Error ? thrown.message : String(thrown) };
     }
   }, [input]);
-
-  const [saveError, setSaveError] = useState<string>();
-
-  async function save() {
-    if (!input || !result) return;
-    try {
-      await saveObservation(toRecord(input, result, { ship: settings.ship, observer: settings.observer }));
-      setSaveError(undefined);
-      onSavedChange(true);
-      onSaved();
-    } catch {
-      // Opening the page straight from a file gives it no storage of its own. The
-      // calculation still stands; only the log is unavailable.
-      setSaveError(
-        'This copy cannot keep a log — the browser gives no storage to a page opened directly from a file. Write the result into the book, or use an installed copy.',
-      );
-    }
-  }
 
   return (
     <>
@@ -224,13 +196,7 @@ export function Calculate({ settings, form, onForm, saved, onSavedChange, onSave
       {failure ? <p className="note error">{failure}</p> : null}
 
       {result ? (
-        <ResultCard
-          result={result}
-          saved={saved}
-          onSave={save}
-          saveError={saveError}
-          isStar={form.bodyKind === 'star'}
-        />
+        <ResultCard result={result} isStar={form.bodyKind === 'star'} />
       ) : (
         <section className="card">
           <p className="empty" style={{ padding: 20 }}>
@@ -242,19 +208,7 @@ export function Calculate({ settings, form, onForm, saved, onSavedChange, onSave
   );
 }
 
-function ResultCard({
-  result,
-  saved,
-  onSave,
-  saveError,
-  isStar,
-}: {
-  result: CompassErrorResult;
-  saved: boolean;
-  onSave: () => void;
-  saveError?: string;
-  isStar: boolean;
-}) {
+function ResultCard({ result, isStar }: { result: CompassErrorResult; isStar: boolean }) {
   const { celestial, working } = result;
 
   return (
@@ -318,14 +272,6 @@ function ResultCard({
           )}
         </div>
       </details>
-
-      {saveError ? <p className="note warn">{saveError}</p> : null}
-
-      <div className="btn-row end" style={{ marginTop: 14 }}>
-        <button type="button" className="btn primary" onClick={onSave} disabled={Boolean(saveError)}>
-          {saved ? 'Saved ✓' : 'Save to log'}
-        </button>
-      </div>
     </section>
   );
 }

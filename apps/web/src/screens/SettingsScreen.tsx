@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Segmented } from '../components/Fields';
 import type { Settings, Theme } from '../settings';
-import { clearObservations } from '../storage/db';
 
 const THEMES: ReadonlyArray<{ value: Theme; label: string }> = [
   { value: 'auto', label: 'Auto' },
@@ -13,47 +11,25 @@ const THEMES: ReadonlyArray<{ value: Theme; label: string }> = [
 interface Props {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
-  recordCount: number;
-  onCleared: () => void;
 }
 
-export function SettingsScreen({ settings, onChange, recordCount, onCleared }: Props) {
-  const [confirming, setConfirming] = useState(false);
-
-  async function clearAll() {
-    await clearObservations();
-    setConfirming(false);
-    onCleared();
-  }
-
+export function SettingsScreen({ settings, onChange }: Props) {
   return (
     <>
       <section className="card">
         <h2>Vessel</h2>
-        <div className="grid">
-          <div className="field">
-            <label htmlFor="ship">Ship's name</label>
-            <input
-              id="ship"
-              type="text"
-              value={settings.ship}
-              placeholder="MV …"
-              onChange={(event) => onChange({ ship: event.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="observer">Observer</label>
-            <input
-              id="observer"
-              type="text"
-              value={settings.observer}
-              placeholder="Rank and name"
-              onChange={(event) => onChange({ observer: event.target.value })}
-            />
-          </div>
+        <div className="field">
+          <label htmlFor="ship">Ship's name</label>
+          <input
+            id="ship"
+            type="text"
+            value={settings.ship}
+            placeholder="MV …"
+            onChange={(event) => onChange({ ship: event.target.value })}
+          />
         </div>
-        <p className="muted" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
-          Both are written into every saved observation and into the exported book.
+        <p className="muted" style={{ fontSize: '0.8rem', margin: '10px 0 0' }}>
+          Shown in the heading, so it is clear which ship the application is set up for.
         </p>
       </section>
 
@@ -104,39 +80,13 @@ export function SettingsScreen({ settings, onChange, recordCount, onCleared }: P
       </section>
 
       <section className="card">
-        <h2>Stored observations</h2>
-        <p className="muted" style={{ marginTop: 0 }}>
-          {recordCount} observation{recordCount === 1 ? '' : 's'} held on this device. Nothing is sent
-          anywhere; the application works entirely offline.
-        </p>
-        {confirming ? (
-          <div className="btn-row">
-            <button type="button" className="btn danger" onClick={clearAll}>
-              Delete all {recordCount}
-            </button>
-            <button type="button" className="btn subtle" onClick={() => setConfirming(false)}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="btn small danger"
-            disabled={recordCount === 0}
-            onClick={() => setConfirming(true)}
-          >
-            Clear the log
-          </button>
-        )}
-      </section>
-
-      <section className="card">
         <h2>About</h2>
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
           Compass Error Calculator. Positions of the Sun, Moon and planets are computed with
           Astronomy Engine; the 57 navigational stars and Polaris are reduced from a catalog of
-          mean ecliptic coordinates of J2000.0. Results are for checking the compasses and do not
-          replace the Nautical Almanac as the ship's official source.
+          mean ecliptic coordinates of J2000.0. Observations are not stored — the result is
+          worked for entering by hand in the ship's Compass Error Book. Results are for checking
+          the compasses and do not replace the Nautical Almanac as the ship's official source.
         </p>
       </section>
     </>

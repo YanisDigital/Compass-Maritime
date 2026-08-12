@@ -1,27 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { initialForm, type FormState } from './form';
-import type { ObservationRecord } from './observation';
 import { Calculate } from './screens/Calculate';
-import { LogScreen } from './screens/LogScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { loadSettings, useSettings } from './settings';
-import { listObservations } from './storage/db';
 
-type Tab = 'calculate' | 'log' | 'settings';
+type Tab = 'calculate' | 'settings';
 
 const TABS: ReadonlyArray<{ id: Tab; label: string }> = [
   { id: 'calculate', label: 'Calculate' },
-  { id: 'log', label: 'Log' },
   { id: 'settings', label: 'Settings' },
 ];
 
 export function App() {
   const [tab, setTab] = useState<Tab>('calculate');
   const [settings, updateSettings] = useSettings();
-  const [records, setRecords] = useState<ObservationRecord[]>([]);
 
   // The half-filled form belongs to the session, not to the tab: an officer who steps
-  // over to the Log to check the last entry must come back to what they had typed.
+  // over to Settings must come back to what they had typed.
   const [form, setForm] = useState<FormState>(() => {
     const stored = loadSettings();
     return initialForm({
@@ -29,13 +24,6 @@ export function App() {
       variationEW: stored.defaultVariationEW,
     });
   });
-  const [saved, setSaved] = useState(false);
-
-  const refresh = useCallback(() => {
-    listObservations().then(setRecords).catch(() => setRecords([]));
-  }, []);
-
-  useEffect(refresh, [refresh]);
 
   return (
     <div className="app">
@@ -54,31 +42,15 @@ export function App() {
               onClick={() => setTab(entry.id)}
             >
               {entry.label}
-              {entry.id === 'log' && records.length > 0 ? ` (${records.length})` : ''}
             </button>
           ))}
         </nav>
       </header>
 
       <main>
-        {tab === 'calculate' ? (
-          <Calculate
-            settings={settings}
-            form={form}
-            onForm={setForm}
-            saved={saved}
-            onSavedChange={setSaved}
-            onSaved={refresh}
-          />
-        ) : null}
-        {tab === 'log' ? <LogScreen records={records} onChanged={refresh} /> : null}
+        {tab === 'calculate' ? <Calculate form={form} onForm={setForm} /> : null}
         {tab === 'settings' ? (
-          <SettingsScreen
-            settings={settings}
-            onChange={updateSettings}
-            recordCount={records.length}
-            onCleared={refresh}
-          />
+          <SettingsScreen settings={settings} onChange={updateSettings} />
         ) : null}
       </main>
     </div>

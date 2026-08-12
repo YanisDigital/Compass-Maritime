@@ -153,6 +153,3 @@ export function parseForm(form: FormState): ParsedForm {
     },
   };
 }
-
-export const bodyLabel = (body: BodyRef): string =>
-  body.kind === 'star' ? body.name : BODY_LABELS[body.kind];
