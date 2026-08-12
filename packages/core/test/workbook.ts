@@ -64,9 +64,3 @@ export const WORKBOOK_STAR_EXPECTED = {
   dec: packedToDegrees(8.5508), // N 8° 55.1′
   azimuth: 83.6296, // N13
 };
-
-/** Amplitude for the Sun in the same example, workbook cell E16. */
-export const WORKBOOK_AMPLITUDE_EXPECTED = {
-  amplitude: 8.6049, // E18
-  trueBearing: 278.6, // E16 — see the note in src/amplitude.ts
-};

@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
-  amplitudeBearing,
   apparentPlace,
   calculateCompassError,
   dayFraction,
   julianCenturies1900,
-  localHourAngle,
   sunLowPrecision,
   toDeg,
   toRad,
 } from '../src/index.js';
-import { WORKBOOK_AMPLITUDE_EXPECTED, WORKBOOK_EXAMPLE, WORKBOOK_SUN_EXPECTED } from './workbook.js';
+import { WORKBOOK_EXAMPLE, WORKBOOK_SUN_EXPECTED } from './workbook.js';
 
 /** One minute of arc, in degrees — the tolerance the almanac itself is printed to. */
 const ARCMIN = 1 / 60;
@@ -19,7 +17,6 @@ describe("the workbook's worked Sun example", () => {
   const result = calculateCompassError({
     ...WORKBOOK_EXAMPLE,
     body: { kind: 'sun' },
-    method: 'azimuth',
   });
 
   it('places the Sun where the workbook places it', () => {
@@ -30,7 +27,6 @@ describe("the workbook's worked Sun example", () => {
   });
 
   it('reproduces the A and B quantities of the azimuth tables', () => {
-    if (result.working.method !== 'azimuth') throw new Error('expected azimuth working');
     expect(result.working.A.value).toBeCloseTo(WORKBOOK_SUN_EXPECTED.A, 3);
     expect(result.working.B.value).toBeCloseTo(WORKBOOK_SUN_EXPECTED.B, 3);
     expect(result.working.A.name).toBe('N');
@@ -43,7 +39,6 @@ describe("the workbook's worked Sun example", () => {
   });
 
   it('carries C at full precision rather than summing rounded table values', () => {
-    if (result.working.method !== 'azimuth') throw new Error('expected azimuth working');
     const { A, B, C, azimuthByABC } = result.working;
 
     // Unrounded, A + B falls a thousandth short of the sheet's 0.944.
@@ -79,8 +74,7 @@ describe("the workbook's worked Sun example", () => {
     const fromTables = calculateCompassError({
       ...WORKBOOK_EXAMPLE,
       body: { kind: 'sun' },
-      method: 'azimuth',
-      // Shift the gyro bearing by the rounding artifact to land on the sheet's answer.
+        // Shift the gyro bearing by the rounding artifact to land on the sheet's answer.
       gyroBearing:
         WORKBOOK_EXAMPLE.gyroBearing +
         (WORKBOOK_SUN_EXPECTED.trueBearingDirect - WORKBOOK_SUN_EXPECTED.trueBearingFromRoundedTables),
@@ -100,30 +94,5 @@ describe("the workbook's own solar series", () => {
 
     expect(Math.abs(low.gha - engine.gha)).toBeLessThan(ARCMIN);
     expect(Math.abs(low.dec - engine.dec)).toBeLessThan(ARCMIN);
-  });
-});
-
-describe('amplitude', () => {
-  it("reproduces the workbook's amplitude and bearing", () => {
-    const { position } = WORKBOOK_EXAMPLE;
-    const place = apparentPlace({ kind: 'sun' }, WORKBOOK_EXAMPLE.utc, position);
-    const lha = localHourAngle(place.gha, position.longitude);
-    const amplitude = amplitudeBearing(position.latitude, place.dec, lha);
-
-    expect(amplitude.working.amplitude).toBeCloseTo(WORKBOOK_AMPLITUDE_EXPECTED.amplitude, 2);
-    expect(amplitude.trueBearing).toBeCloseTo(WORKBOOK_AMPLITUDE_EXPECTED.trueBearing, 1);
-    expect(amplitude.working.quadrant).toBe('NW');
-  });
-
-  it('rises north of East with northerly declination — the case the workbook gets wrong', () => {
-    // Declination 10° N, latitude 20° N, body east of the meridian (rising).
-    const { trueBearing, working } = amplitudeBearing(20, 10, 270);
-    expect(working.quadrant).toBe('NE');
-    expect(trueBearing).toBeLessThan(90);
-    expect(trueBearing).toBeCloseTo(90 - working.amplitude, 6);
-  });
-
-  it('refuses a body that never reaches the horizon at that latitude', () => {
-    expect(() => amplitudeBearing(80, 60, 90)).toThrow(/never reaches the horizon/);
   });
 });

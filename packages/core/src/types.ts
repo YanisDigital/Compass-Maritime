@@ -26,9 +26,6 @@ export type SolarSystemBody = 'sun' | 'moon' | 'venus' | 'mars' | 'jupiter' | 's
 
 export type BodyRef = { kind: SolarSystemBody } | { kind: 'star'; name: string };
 
-/** How the body's true bearing is obtained. */
-export type Method = 'azimuth' | 'amplitude';
-
 /** Apparent place of the observed body, in the terms a Compass Error Book uses. */
 export interface CelestialPosition {
   /** Greenwich hour angle, 0–360. */
@@ -52,7 +49,6 @@ export interface NamedValue {
 }
 
 export interface AzimuthWorking {
-  method: 'azimuth';
   A: NamedValue;
   B: NamedValue;
   C: NamedValue;
@@ -60,24 +56,11 @@ export interface AzimuthWorking {
   azimuthByABC: number;
 }
 
-export interface AmplitudeWorking {
-  method: 'amplitude';
-  /** Amplitude measured from the prime vertical, degrees. */
-  amplitude: number;
-  /** `E` while the body is east of the meridian (rising), `W` while west (setting). */
-  risingSetting: EastWest;
-  /** Quadrant the bearing falls in, e.g. `NW`. */
-  quadrant: string;
-}
-
-export type Working = AzimuthWorking | AmplitudeWorking;
-
 export interface CompassErrorInput {
   /** Instant of observation, UTC. */
   utc: Date;
   position: Position;
   body: BodyRef;
-  method: Method;
   /** Bearing of the body read off the gyro repeater, 0–360. */
   gyroBearing: number;
   /** Ship's head by gyro compass, 0–360. Omit to compute gyro error only. */
@@ -91,7 +74,7 @@ export interface CompassErrorInput {
 export interface CompassErrorResult {
   trueBearing: number;
   celestial: CelestialPosition;
-  working: Working;
+  working: AzimuthWorking;
   gyroError: EastWestAngle;
   trueCourse?: number;
   totalError?: EastWestAngle;

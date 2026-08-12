@@ -5,7 +5,6 @@ import { WORKBOOK_EXAMPLE } from './workbook.js';
 const baseInput = {
   ...WORKBOOK_EXAMPLE,
   body: { kind: 'sun' } as const,
-  method: 'azimuth' as const,
 };
 
 describe('the compass error chain', () => {
@@ -24,7 +23,6 @@ describe('the compass error chain', () => {
       utc: baseInput.utc,
       position: baseInput.position,
       body: baseInput.body,
-      method: baseInput.method,
       gyroBearing: baseInput.gyroBearing,
     });
     expect(result.gyroError).toBeDefined();
@@ -76,7 +74,6 @@ describe('the compass error chain', () => {
       utc,
       position: { latitude: dec, longitude: 0 },
       body: { kind: 'star', name: 'Sirius' },
-      method: 'azimuth',
       gyroBearing: 0,
     });
     const longitude = -meridian.celestial.gha;
@@ -85,17 +82,20 @@ describe('the compass error chain', () => {
       utc,
       position: { latitude: dec, longitude },
       body: { kind: 'star', name: 'Sirius' },
-      method: 'azimuth',
       gyroBearing: 0,
     });
     expect(overhead.celestial.altitude).toBeGreaterThan(85);
     expect(overhead.warnings.join(' ')).toMatch(/change rapidly/);
   });
 
-  it('warns when an amplitude is taken with the body well clear of the horizon', () => {
-    const result = calculateCompassError({ ...baseInput, method: 'amplitude' });
-    expect(result.celestial.altitude).toBeGreaterThan(2);
-    expect(result.warnings.join(' ')).toMatch(/on the horizon/);
+  it('warns when the body is below the horizon at that place and time', () => {
+    const result = calculateCompassError({
+      ...baseInput,
+      // Half a day on puts the Sun the other side of the Earth from this position.
+      utc: new Date(baseInput.utc.getTime() + 12 * 3600 * 1000),
+    });
+    expect(result.celestial.altitude).toBeLessThan(-1);
+    expect(result.warnings.join(' ')).toMatch(/below the horizon/);
   });
 
   it('reports no warnings for an ordinary low-altitude azimuth', () => {

@@ -4,7 +4,10 @@ interface SegmentedProps<T extends string> {
   value: T;
   options: ReadonlyArray<{ value: T; label: string }>;
   onChange: (value: T) => void;
+  /** Shown above the control, and used to name it. */
   label?: string;
+  /** Names the control when the heading above it already says what this is. */
+  ariaLabel?: string;
   tight?: boolean;
 }
 
@@ -13,6 +16,7 @@ export function Segmented<T extends string>({
   options,
   onChange,
   label,
+  ariaLabel,
   tight,
 }: SegmentedProps<T>) {
   return (
@@ -21,7 +25,7 @@ export function Segmented<T extends string>({
       <div
         className={tight ? 'segmented segmented--tight' : 'segmented'}
         role="group"
-        aria-label={label}
+        aria-label={label ?? ariaLabel}
       >
         {options.map((option) => (
           <button

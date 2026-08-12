@@ -17,7 +17,7 @@ repeater, it computes:
 
 | | |
 |---|---|
-| **True bearing** | by azimuth at any altitude, or by amplitude with the body on the horizon |
+| **True bearing** | the body's azimuth, from the position and the time of the sight |
 | **Gyro error** | degrees East or West |
 | **True course** | ship's head by gyro, corrected for the gyro error |
 | **Total (compass) error** | true course against the magnetic compass course |
@@ -26,6 +26,11 @@ repeater, it computes:
 The working — GHA, declination, LHA, calculated altitude and the A/B/C quantities of the
 azimuth tables — is shown alongside, so the result can be checked against the printed tables
 by hand.
+
+There is one method and no method chooser. Azimuth is what is actually worked on the bridge:
+a bearing off the azimuth mirror, the ship's position and the time. Amplitude was offered at
+first and removed — it is only valid with the body on the horizon, so it is available twice a
+day, and a chooser between the two invites the wrong one being picked.
 
 Nothing is stored. The Compass Error Book is kept on paper, so the application works the
 observation and shows it; the officer writes it into the book.
@@ -101,17 +106,14 @@ they depend on, so the suite runs without opening it.
 
 ### Deliberate departures from the reference workbook
 
-`Refrences/NavCAlExcel.xls` is the spreadsheet this replaces. Four things were changed rather
+`Refrences/NavCAlExcel.xls` is the spreadsheet this replaces. Three things were changed rather
 than reproduced, each covered by a test:
 
 1. **`Enif`'s ecliptic latitude** is `222.0999` in the sheet. That is not an angle a latitude
    can take; the value is `22.0999`. Corrected.
-2. **The amplitude formula** maps the NE quadrant to `90 + amplitude`. A body with northerly
-   declination rises *north* of East, so it is `90 − amplitude` — which is what the sheet's own
-   ABC azimuth formula uses for the same quadrant. Corrected.
-3. **Bearing differences are wrapped to ±180°.** The sheet subtracts directly, so a true
+2. **Bearing differences are wrapped to ±180°.** The sheet subtracts directly, so a true
    bearing of 001° against a gyro reading of 359° comes out as 358° W instead of 2° E.
-4. **A and B are carried at full precision.** The sheet rounds each to three decimals before
+3. **A and B are carried at full precision.** The sheet rounds each to three decimals before
    summing them, as the printed azimuth tables do. On the sheet's own worked example that
    shifts the answer by 0.02°, which is enough to move the reported gyro error from 0.2° E to
    0.3° E. The sheet's unrounded spherical calculation agrees with this application to six

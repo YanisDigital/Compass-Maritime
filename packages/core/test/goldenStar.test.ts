@@ -43,7 +43,6 @@ describe("the workbook's worked star example — Altair", () => {
     const result = calculateCompassError({
       ...WORKBOOK_EXAMPLE,
       body: { kind: 'star', name: 'Altair' },
-      method: 'azimuth',
     });
     expect(result.trueBearing).toBeCloseTo(WORKBOOK_STAR_EXPECTED.azimuth, 2);
     expect(result.celestial.sha).toBeCloseTo(WORKBOOK_STAR_EXPECTED.sha, 3);

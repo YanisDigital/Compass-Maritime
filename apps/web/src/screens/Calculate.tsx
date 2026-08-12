@@ -16,11 +16,6 @@ const BODY_OPTIONS = (Object.keys(BODY_LABELS) as BodyChoice[]).map((value) => (
   label: BODY_LABELS[value],
 }));
 
-const METHOD_OPTIONS = [
-  { value: 'azimuth' as const, label: 'Azimuth' },
-  { value: 'amplitude' as const, label: 'Amplitude' },
-];
-
 /** The magnitude of an East/West angle. Its name is set separately, and larger. */
 const figure = (angle: EastWestAngle) => `${angle.degrees.toFixed(1)}°`;
 
@@ -56,7 +51,6 @@ export function Calculate({ form, onForm }: Props) {
             result={result}
             gyroBearing={input!.gyroBearing}
             body={bodyName}
-            method={form.method === 'amplitude' ? 'Amplitude' : 'Azimuth'}
           />
         ) : (
           <section className="instrument">
@@ -143,6 +137,7 @@ export function Calculate({ form, onForm }: Props) {
               value={form.bodyKind}
               options={BODY_OPTIONS}
               onChange={(bodyKind) => set({ bodyKind })}
+              ariaLabel="Body observed"
               tight
             />
             {form.bodyKind === 'star' ? (
@@ -164,12 +159,6 @@ export function Calculate({ form, onForm }: Props) {
                 </select>
               </div>
             ) : null}
-            <Segmented
-              label="Method"
-              value={form.method}
-              options={METHOD_OPTIONS}
-              onChange={(method) => set({ method })}
-            />
           </div>
         </section>
 
@@ -232,12 +221,10 @@ function Instrument({
   result,
   gyroBearing,
   body,
-  method,
 }: {
   result: CompassErrorResult;
   gyroBearing: number;
   body: string;
-  method: string;
 }) {
   return (
     <section className="instrument instrument--live">
@@ -247,9 +234,10 @@ function Instrument({
           {figure(result.gyroError)}
           <span className="principal-name">{result.gyroError.name}</span>
         </p>
+        {/* Altitude sits beside the body because a high one makes for a poor azimuth. */}
         <p className="principal-aside">
           <b>{body}</b>
-          {method}
+          Alt {result.celestial.altitude.toFixed(0)}°
         </p>
       </div>
 
@@ -326,22 +314,9 @@ function Reading({ result, isStar }: { result: CompassErrorResult; isStar: boole
             name={celestial.lha > 180 ? 'E' : 'W'}
           />
           <LedgerRow label="Calculated altitude" value={`${celestial.altitude.toFixed(1)}°`} />
-          {working.method === 'azimuth' ? (
-            <>
-              <LedgerRow label="A" value={working.A.value.toFixed(3)} name={working.A.name} />
-              <LedgerRow label="B" value={working.B.value.toFixed(3)} name={working.B.name} />
-              <LedgerRow label="C" value={working.C.value.toFixed(3)} name={working.C.name} />
-            </>
-          ) : (
-            <>
-              <LedgerRow label="Amplitude" value={`${working.amplitude.toFixed(1)}°`} />
-              <LedgerRow
-                label="Rising or setting"
-                value={working.risingSetting === 'E' ? 'Rising' : 'Setting'}
-                name={working.quadrant}
-              />
-            </>
-          )}
+          <LedgerRow label="A" value={working.A.value.toFixed(3)} name={working.A.name} />
+          <LedgerRow label="B" value={working.B.value.toFixed(3)} name={working.B.name} />
+          <LedgerRow label="C" value={working.C.value.toFixed(3)} name={working.C.name} />
         </div>
       </details>
     </section>

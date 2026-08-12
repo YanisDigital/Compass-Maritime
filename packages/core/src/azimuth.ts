@@ -71,14 +71,14 @@ export function abcWorking(latitude: number, dec: number, lha: number): AzimuthW
     hourAngleName(lha),
   );
 
-  return { method: 'azimuth', A, B, C, azimuthByABC };
+  return { A, B, C, azimuthByABC };
 }
 
 /**
  * Convert a quadrantal bearing into three-figure notation (`SUN & STAR CALC.` P27).
  *
  * `angle` is measured from the prime vertical — from East or from West toward the
- * named pole — which is the form both `atan(C·cos lat)` and the amplitude produce.
+ * named pole — which is the form `atan(C·cos lat)` produces.
  */
 export function quadrantalToThreeFigure(
   angle: number,

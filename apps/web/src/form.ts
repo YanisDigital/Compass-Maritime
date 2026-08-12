@@ -1,4 +1,4 @@
-import type { BodyRef, CompassErrorInput, Method, SolarSystemBody } from '@compass/core';
+import type { BodyRef, CompassErrorInput, SolarSystemBody } from '@compass/core';
 import { fromDegreesMinutes } from '@compass/core';
 
 export type BodyChoice = SolarSystemBody | 'star';
@@ -14,7 +14,6 @@ export interface FormState {
   lonEW: 'E' | 'W';
   bodyKind: BodyChoice;
   starName: string;
-  method: Method;
   gyroBearing: string;
   gyroCourse: string;
   magneticCourse: string;
@@ -55,7 +54,6 @@ export function initialForm(defaults?: { variation?: string; variationEW?: 'E' |
     lonEW: 'E',
     bodyKind: 'sun',
     starName: 'Altair',
-    method: 'azimuth',
     gyroBearing: '',
     gyroCourse: '',
     magneticCourse: '',
@@ -140,7 +138,6 @@ export function parseForm(form: FormState): ParsedForm {
         longitude: fromDegreesMinutes(lonDeg, lonMin, form.lonEW === 'W'),
       },
       body,
-      method: form.method,
       gyroBearing,
       gyroCourse,
       magneticCourse,

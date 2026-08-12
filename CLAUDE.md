@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A gyro/magnetic compass error calculator for navigational officers. Given ship's position,
 UTC time, and an observed bearing of the Sun, Moon, a planet, or a navigational star, it
-computes true bearing (by azimuth or amplitude), gyro error, true course, total compass
+computes the body's true bearing by azimuth, gyro error, true course, total compass
 error, and deviation — the values needed to fill a line of the ship's Standard Compass Error
 Book. Nothing is stored by the app; the officer transcribes the result onto paper.
 
@@ -27,7 +27,7 @@ Run a single test file or pattern with Vitest directly, from the relevant worksp
 
 ```bash
 cd packages/core && npx vitest run test/goldenSun.test.ts
-cd packages/core && npx vitest run -t "amplitude"
+cd packages/core && npx vitest run -t "azimuth"
 cd apps/web && npx vitest run src/form.test.ts
 ```
 
@@ -57,11 +57,13 @@ proved; `apps/web` contains no calculation logic of its own, only formatting and
 - `ephemeris/index.ts` — `apparentPlace(body, utc, position)` is the one production entry
   point for celestial positions. Stars go through `starReduction.ts`; Sun/Moon/planets go
   through `astronomy-engine` (topocentric, so Moon parallax is included).
-- `azimuth.ts` / `amplitude.ts` — the two bearing methods. `azimuth.ts` also computes the
-  A/B/C values from the printed azimuth tables (`abcWorking`) as a cross-check display, kept
-  at full precision (see "Deliberate departures" below).
+- `azimuth.ts` — the only bearing method. Also computes the A/B/C values from the printed
+  azimuth tables (`abcWorking`) as a cross-check display, kept at full precision (see
+  "Deliberate departures" below). Amplitude was implemented and then removed: it is only
+  valid with the body on the horizon, and offering a choice invited the wrong pick. Do not
+  reintroduce a method selector without being asked.
 - `compassError.ts` — `calculateCompassError(input) → CompassErrorResult` is **the single
-  function the UI calls**. Wires ephemeris → azimuth/amplitude → gyro error → true course →
+  function the UI calls**. Wires ephemeris → azimuth → gyro error → true course →
   total error → deviation, wrapping every bearing difference to ±180° (`norm180`).
 - `index.ts` — the package's public surface; everything else is an implementation detail
   reached only through here.
@@ -82,12 +84,9 @@ Each is covered by a test — see `packages/core/test/` for the specifics:
 
 1. **`Enif`'s ecliptic latitude** was `222.0999` in the sheet (not a valid latitude); corrected
    to `22.0999` in `catalog/stars.ts`.
-2. **Amplitude's NE quadrant** — the sheet's `90 + amplitude` is backwards for northerly
-   declination; corrected to `90 − amplitude` in `amplitude.ts` (matches the sheet's own ABC
-   formula for the same quadrant).
-3. **Bearing differences wrap to ±180°** (`norm180`), where the sheet subtracts directly —
+2. **Bearing differences wrap to ±180°** (`norm180`), where the sheet subtracts directly —
    avoids e.g. a true 001°/gyro 359° difference reading as 358° W instead of 2° E.
-4. **A and B are carried at full floating-point precision** in `abcWorking`, rather than
+3. **A and B are carried at full floating-point precision** in `abcWorking`, rather than
    rounded to three decimals before summing (as the printed tables and the sheet do). This
    is a ~0.02° effect on the worked example; the unrounded result agrees with the sheet's own
    unrounded spherical formula to six decimal places.
