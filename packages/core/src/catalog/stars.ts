@@ -13,7 +13,7 @@
  *     `test/starCrossCheck.test.ts`.
  */
 export interface StarCatalogEntry {
-  /** Position in the workbook's list, which is also the code shown on the Star Finder sheet. */
+  /** Position in the workbook's list, kept so a row here can be traced back to it. */
   code: number;
   name: string;
   /** Mean ecliptic longitude at J2000.0, degrees. */

@@ -5,7 +5,7 @@
  * install and no server. Inline module scripts run from `file://`; external ones do not,
  * which is why everything has to end up inside the single document.
  *
- *   npm run build:single
+ *   npm run build
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
@@ -29,11 +29,7 @@ if (!existsSync(viteBin)) {
   process.exit(1);
 }
 
-execFileSync(process.execPath, [viteBin, 'build'], {
-  cwd: WEB,
-  stdio: 'inherit',
-  env: { ...process.env, VITE_SINGLE_FILE: 'true' },
-});
+execFileSync(process.execPath, [viteBin, 'build'], { cwd: WEB, stdio: 'inherit' });
 
 if (!existsSync(join(BUILD, 'index.html'))) {
   console.error(`No build found at ${BUILD}.`);

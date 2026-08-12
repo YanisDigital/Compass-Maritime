@@ -4,8 +4,9 @@ Works the **gyro compass error** and the **magnetic compass deviation** from an 
 bearing of the Sun, Moon, a planet or a navigational star, and produces the values needed to
 fill a line of the ship's *Standard Compass Error Book*.
 
-Runs on a bridge PC and on a phone, and works **entirely offline** — there is no server, no
-account and no network call at any point.
+It ships as **one HTML file**. Copy it anywhere — a USB stick, an email attachment, the
+ship's shared drive — and double-click it. No install, no server, no administrator rights,
+and no network call at any point.
 
 ---
 
@@ -33,7 +34,13 @@ observation and shows it; the officer writes it into the book.
 
 ---
 
-## Getting started
+## Using it
+
+Open `release/compass-error.html`. That is the whole application.
+
+---
+
+## Working on it
 
 ```bash
 npm install
@@ -49,6 +56,17 @@ Then open <http://localhost:5173>.
 npm test
 ```
 
+```bash
+npm run build
+```
+
+The build writes `release/compass-error.html`, about 220 kB, with every script, style and
+icon inlined. Inline module scripts run from `file://` while external ones do not, which is
+why the whole application has to end up inside the single document; the build fails if any
+external reference survives.
+
+There is no update mechanism — reissue the file to update it.
+
 ---
 
 ## How it is put together
@@ -56,23 +74,21 @@ npm test
 ```
 packages/core     Pure TypeScript. All of the astronomy and all of the compass arithmetic.
                   No DOM, no framework. This is where the tests live.
-apps/web          React + Vite progressive web app — the only user interface there is.
-src-tauri         Windows desktop shell. Wraps the built web bundle in a native window.
-capacitor.config  Android and iOS shells. Wrap the same bundle.
-release           The single-file build, ready to hand to somebody.
-scripts           Icon generation and the single-file build.
+apps/web          React + Vite. The user interface, and nothing else.
+release           The built HTML file, ready to hand to somebody.
+scripts           The single-file build.
 Refrences         The spreadsheet the formulas were taken from.
 ```
 
-The tests in `packages/core/test/workbook.ts` quote every value from that spreadsheet that
+The interface never does astronomy. It calls one function —
+`calculateCompassError(input)` — and formats what comes back. Keeping that in its own
+package is what allows the mathematics to be tested on its own, without a browser.
+
+The tests in `packages/core/test/workbook.ts` quote every value from the spreadsheet that
 they depend on, so the suite runs without opening it.
 
 > This repository is private. It carries a third-party navigation spreadsheet in
 > `Refrences/`; check its provenance before making the repository public.
-
-The interface never does astronomy. It calls one function —
-`calculateCompassError(input)` — and formats what comes back. Every delivery target runs the
-same core, so there is one implementation of the mathematics and one set of tests over it.
 
 ### Where the numbers come from
 
@@ -100,74 +116,6 @@ than reproduced, each covered by a test:
    shifts the answer by 0.02°, which is enough to move the reported gyro error from 0.2° E to
    0.3° E. The sheet's unrounded spherical calculation agrees with this application to six
    decimal places.
-
----
-
-## Building
-
-### Single file — the simplest thing to hand to somebody
-
-```bash
-npm run build:single
-```
-
-Produces `release/compass-error.html`, about 230 kB, with every script, style and icon
-inlined. Copy it anywhere — a USB stick, an email attachment, the ship's shared
-drive — and double-click it. No install, no server, no Node, no administrator rights.
-
-Verified in Chromium opened straight from `file://`. The application holds no data of its
-own beyond the handful of settings on the Settings tab, so there is nothing that can fail to
-save.
-
-There is no service worker in this build and no update mechanism — reissue the file to
-update it.
-
-### Progressive web app
-
-```bash
-npm run build
-```
-
-The bundle lands in `apps/web/dist`, precached by a service worker. Served over HTTPS it
-installs to the home screen on Android and iOS and to the desktop on Windows — no app store
-and no administrator rights needed, which matters on a locked-down bridge PC.
-
-### Windows desktop
-
-Needs [Rust](https://rustup.rs/) and the Visual Studio Build Tools with the MSVC and Windows
-SDK components. Then:
-
-```bash
-npm run tauri:build
-```
-
-Produces an `.msi` and an NSIS installer under `src-tauri/target/release/bundle`.
-
-### Android
-
-Needs Android Studio with the SDK. One-time:
-
-```bash
-npm run android:add
-```
-
-Thereafter:
-
-```bash
-npm run android:sync && npm run android:open
-```
-
-### iOS
-
-Needs a Mac with Xcode. `npm run ios:add`, then `npm run ios:sync`.
-
----
-
-## Not in this version
-
-Deviation card per ship, celestial sight reduction (intercept and position lines), and the
-Star Finder module. The star catalog and reduction the Star Finder needs are already in
-`packages/core`.
 
 ---
 
