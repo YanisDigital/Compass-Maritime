@@ -606,7 +606,11 @@ body {
   gap: 12px;
 }
 
-@media (max-width: 380px) {
+/*  Two fields side by side stop working before the screen gets truly narrow: at about 170px
+    a column the longer labels wrap to a second line while their neighbour's does not, and the
+    two inputs fall out of line. One column from here down, which also gives the fields a
+    usable width on a phone. */
+@media (max-width: 460px) {
   .pair {
     grid-template-columns: 1fr;
   }
@@ -618,6 +622,10 @@ body {
   display: grid;
   gap: 6px;
   min-width: 0;
+  /* Rows keep their natural height. Without this, a field standing beside one that has
+     sprouted an error message is stretched to match, and the extra height is absorbed by the
+     label row — which pushes that field's input out of line with its neighbour's. */
+  align-content: start;
 }
 
 .field-label {
