@@ -17,13 +17,16 @@ const BODY_OPTIONS = (Object.keys(BODY_LABELS) as BodyChoice[]).map((value) => (
 }));
 
 /**
- * Polaris heads the list rather than sitting last alphabetically: it is the star most often
- * reached for when checking a compass in northern latitudes, and the almanac keeps it apart
- * from the 57 selected stars for the same reason. The catalog itself is left in its own
- * order — this is a picker decision, not a data one.
+ * Every star alphabetically, Polaris among them. The catalog keeps the workbook's own order,
+ * which appends Polaris after the 57 selected stars; where it belongs in a picker is a
+ * presentation decision, not a data one.
+ *
+ * Spaces are ignored when comparing, which is the convention the catalog already follows:
+ * `Al Nair` sorts after `Alkaid` rather than ahead of it.
  */
-const POLARIS = STAR_CATALOG.filter((star) => star.name === 'Polaris');
-const SELECTED_STARS = STAR_CATALOG.filter((star) => star.name !== 'Polaris');
+const STAR_OPTIONS = [...STAR_CATALOG].sort((a, b) =>
+  a.name.replace(/\s+/g, '').localeCompare(b.name.replace(/\s+/g, '')),
+);
 
 /** The magnitude of an East/West angle. Its name is set separately, and larger. */
 const figure = (angle: EastWestAngle) => `${angle.degrees.toFixed(1)}°`;
@@ -160,20 +163,11 @@ export function Calculate({ form, onForm }: Props) {
                   value={form.starName}
                   onChange={(event) => set({ starName: event.target.value })}
                 >
-                  <optgroup label="Pole star">
-                    {POLARIS.map((star) => (
-                      <option key={star.code} value={star.name}>
-                        {star.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Navigational stars">
-                    {SELECTED_STARS.map((star) => (
-                      <option key={star.code} value={star.name}>
-                        {star.name}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {STAR_OPTIONS.map((star) => (
+                    <option key={star.code} value={star.name}>
+                      {star.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             ) : null}
