@@ -14,3 +14,6 @@ Thumbs.db
 .agents/
 .claude/skills/
 skills-lock.json
+
+# Reference material, held locally and not published
+Refrences/

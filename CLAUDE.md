@@ -74,9 +74,10 @@ proved; `apps/web` contains no calculation logic of its own, only formatting and
 panel (GHA/Dec/LHA/altitude/A-B-C) so an officer can check the answer against printed tables
 by hand.
 
-**`Refrences/NavCAlExcel.xls`** — the Excel workbook this application replaces; the source
-of every formula ported above. `packages/core/test/workbook.ts` hardcodes every value the
-golden tests need from it, so the suite runs without opening the file.
+**`Refrences/NavCAlExcel.xls`** — the Excel workbook this application replaces; the source of
+every formula ported above. It is third-party material, so it is **gitignored and not in this
+repository** — expect it to be absent. `packages/core/test/workbook.ts` hardcodes every value
+the golden tests need from it, so the suite runs without it.
 
 ### Deliberate departures from the reference workbook
 
