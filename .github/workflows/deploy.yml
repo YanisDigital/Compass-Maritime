@@ -15,10 +15,11 @@ permissions:
   pages: write
   id-token: write
 
-# One deployment at a time; a newer push supersedes one still in flight.
+# One deployment at a time, and never cancel one that has already started: a half-finished
+# deployment would leave the published site in an unknown state.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -57,13 +58,13 @@ jobs:
           echo "No external references."
 
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         with:
           path: _site
 
   deploy:
     name: Deploy to Pages
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
