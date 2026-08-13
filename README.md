@@ -1,10 +1,15 @@
 # Compass Error Calculator
 
+[![Build and deploy](https://github.com/YanisDigital/Compass-Maritime/actions/workflows/deploy.yml/badge.svg)](https://github.com/YanisDigital/Compass-Maritime/actions/workflows/deploy.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 **One HTML file that tells a ship's officer how far wrong the ship's compasses are, by
 measuring them against the sun.**
 
 No install, no server, no account, no network. Download one file, double-click it, and it
 works — including in the middle of an ocean with no connectivity.
+
+### ➜ [Open the live demo](https://yanisdigital.github.io/Compass-Maritime/)
 
 <!-- Screenshot goes here: ![The Calculate screen](docs/screenshot.png) -->
 
@@ -87,13 +92,16 @@ Nothing is stored. The Compass Error Book is paper, and the officer writes the l
 
 ## Try it
 
-Download **[`release/compass-error.html`](release/compass-error.html)** and open it in any
-browser.
+**[Open the live demo](https://yanisdigital.github.io/Compass-Maritime/)** — or download
+**[`release/compass-error.html`](release/compass-error.html)** and open it from your own disk.
 
-That single 224 kB file *is* the application — every script, style and icon is inlined into the
-document. It runs from a USB stick, an email attachment or a shared drive, on a phone or a
-desktop, with the network unplugged. Nothing to install, and no administrator rights needed:
-bridge computers are often locked down, and there is no internet at sea.
+They are the same 224 kB file. It *is* the application: every script, style and icon is inlined
+into the document, so it runs from a USB stick, an email attachment or a shared drive, on a
+phone or a desktop, with the network unplugged. Nothing to install, and no administrator rights
+needed — bridge computers are often locked down, and there is no internet at sea.
+
+The demo is rebuilt from source on every push, and cannot be published unless the type check
+and the whole test suite pass first, so what you are looking at is never stale.
 
 ---
 
