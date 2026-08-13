@@ -16,6 +16,15 @@ const BODY_OPTIONS = (Object.keys(BODY_LABELS) as BodyChoice[]).map((value) => (
   label: BODY_LABELS[value],
 }));
 
+/**
+ * Polaris heads the list rather than sitting last alphabetically: it is the star most often
+ * reached for when checking a compass in northern latitudes, and the almanac keeps it apart
+ * from the 57 selected stars for the same reason. The catalog itself is left in its own
+ * order — this is a picker decision, not a data one.
+ */
+const POLARIS = STAR_CATALOG.filter((star) => star.name === 'Polaris');
+const SELECTED_STARS = STAR_CATALOG.filter((star) => star.name !== 'Polaris');
+
 /** The magnitude of an East/West angle. Its name is set separately, and larger. */
 const figure = (angle: EastWestAngle) => `${angle.degrees.toFixed(1)}°`;
 
@@ -151,11 +160,20 @@ export function Calculate({ form, onForm }: Props) {
                   value={form.starName}
                   onChange={(event) => set({ starName: event.target.value })}
                 >
-                  {STAR_CATALOG.map((star) => (
-                    <option key={star.code} value={star.name}>
-                      {star.name}
-                    </option>
-                  ))}
+                  <optgroup label="Pole star">
+                    {POLARIS.map((star) => (
+                      <option key={star.code} value={star.name}>
+                        {star.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Navigational stars">
+                    {SELECTED_STARS.map((star) => (
+                      <option key={star.code} value={star.name}>
+                        {star.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             ) : null}
