@@ -14,6 +14,8 @@ export default defineConfig({
     outDir: 'dist-single',
     cssCodeSplit: false,
     assetsInlineLimit: 100_000_000,
-    rollupOptions: { output: { inlineDynamicImports: true } },
+    // One chunk, always: a second file would have to be fetched, and there is nothing to
+    // fetch it from once the page is a lone document on a USB stick.
+    rollupOptions: { output: { codeSplitting: false } },
   },
 });

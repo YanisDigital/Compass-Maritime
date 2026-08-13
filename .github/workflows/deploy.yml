@@ -10,10 +10,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege by default. The build job runs on pull requests, over code the contributor
+# controls, so it gets nothing but the right to read the checkout. Publishing rights are
+# granted to the deploy job alone, which runs no contributor code.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # One deployment at a time, and never cancel one that has already started: a half-finished
 # deployment would leave the published site in an unknown state.
@@ -25,6 +26,8 @@ jobs:
   build:
     name: Test and build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -49,13 +52,10 @@ jobs:
           mkdir -p _site
           cp release/compass-error.html _site/index.html
 
+      # The build already refuses to write a page that fetches anything; this runs the same
+      # check once more against the exact bytes about to be published.
       - name: Check the published page is self-contained
-        run: |
-          if grep -oE '(src|href)="[^"]+"' _site/index.html | grep -v 'data:'; then
-            echo "::error::The page still references an external file."
-            exit 1
-          fi
-          echo "No external references."
+        run: node scripts/assert-self-contained.mjs _site/index.html
 
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
@@ -67,6 +67,9 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

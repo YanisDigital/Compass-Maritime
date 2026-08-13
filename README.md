@@ -6,8 +6,8 @@
 **One HTML file that tells a ship's officer how far wrong the ship's compasses are, by
 measuring them against the sun.**
 
-No install, no server, no account, no network. Download one file, double-click it, and it
-works — including in the middle of an ocean with no connectivity.
+No install, no server, no account. Download one file, double-click it, and it works — including
+in the middle of an ocean with no connectivity.
 
 ### ➜ [Open the live demo](https://yanisdigital.github.io/Compass-Maritime/)
 
@@ -102,6 +102,19 @@ needed — bridge computers are often locked down, and there is no internet at s
 
 The demo is rebuilt from source on every push, and cannot be published unless the type check
 and the whole test suite pass first, so what you are looking at is never stale.
+
+### Privacy
+
+The application makes no network requests of any kind, and this is enforced rather than
+promised: the page carries a `Content-Security-Policy` of `default-src 'none'`, so the browser
+refuses any connection the code might attempt. Because it is a `<meta>` tag rather than a
+header, that policy survives being copied onto a USB stick. Nothing you type is transmitted,
+logged or stored anywhere off the machine.
+
+Two honest footnotes. Loading the *hosted demo* is an ordinary page load, so GitHub sees your
+IP address and browser as it would for any web page — the downloaded file involves nobody.
+And the ship's name from the Settings tab is kept in that browser's `localStorage`, which on a
+shared bridge computer will still be there for the next watch.
 
 ---
 

@@ -7,10 +7,11 @@
  *
  *   npm run build
  */
-import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, extname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { assertSelfContained } from './assert-self-contained.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = join(ROOT, 'apps', 'web');
@@ -21,15 +22,19 @@ const RELEASE = join(ROOT, 'release');
 
 rmSync(BUILD, { recursive: true, force: true });
 
-// Vite's own entry point, run on this Node binary: no shell, so it behaves the same on
-// Windows as it does anywhere else.
-const viteBin = join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
-if (!existsSync(viteBin)) {
-  console.error(`Vite not found at ${viteBin}. Run npm install first.`);
+// Vite is resolved the way Node would resolve it from the web workspace, and driven through
+// its own API. Nothing here depends on where the installer chose to put the package or on
+// spawning a shell, both of which vary by npm version and by platform.
+const requireFromWeb = createRequire(pathToFileURL(join(WEB, 'package.json')));
+let vite;
+try {
+  vite = await import(pathToFileURL(requireFromWeb.resolve('vite')).href);
+} catch {
+  console.error('Vite could not be resolved from apps/web. Run npm install first.');
   process.exit(1);
 }
 
-execFileSync(process.execPath, [viteBin, 'build'], { cwd: WEB, stdio: 'inherit' });
+await vite.build({ root: WEB });
 
 if (!existsSync(join(BUILD, 'index.html'))) {
   console.error(`No build found at ${BUILD}.`);
@@ -83,17 +88,45 @@ html = html.replace(/href="(\.\/[^"]+\.(?:svg|png|ico))"/gi, (match, href) => {
   return uri ? `href="${uri}"` : match;
 });
 
+/**
+ * The application makes no network requests. This makes the browser enforce that, instead of
+ * leaving it a property of how the code happens to be written today: `default-src 'none'`
+ * covers connect-src, so fetch, XHR and WebSocket are refused whatever runs.
+ *
+ * It goes in at build time rather than sitting in index.html because the dev server needs the
+ * opposite — its module graph and hot-reload socket are all external requests.
+ *
+ * A meta tag rather than a header, because this file is carried about on USB sticks and as an
+ * email attachment, and a header would not survive the copy. `frame-ancestors` is deliberately
+ * absent: browsers ignore it when it arrives this way, and a policy that claims a protection
+ * it does not deliver is worse than not claiming it.
+ *
+ * `'unsafe-inline'` is unavoidable once script and style are inlined into the document, which
+ * is the whole point of the build. It concedes nothing here: there is no injection point, and
+ * no origin the page is allowed to reach.
+ */
+const CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  'img-src data:',
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ');
+
 html = html.replace(
   '</head>',
-  '<meta name="robots" content="noindex" />\n  </head>',
+  `<meta http-equiv="Content-Security-Policy" content="${CSP}" />\n` +
+    '    <meta name="robots" content="noindex" />\n  </head>',
 );
 
 writeFileSync(OUTPUT, html);
 
-// Nothing may remain that the browser would have to fetch from disk.
-const leftovers = [...html.matchAll(/(?:src|href)="((?!data:|#)[^"]+)"/gi)].map((m) => m[1]);
-if (leftovers.length > 0) {
-  console.error(`Not self-contained — still references: ${leftovers.join(', ')}`);
+// Nothing may remain that the browser would have to fetch. CI runs this same check again
+// against the page it is about to publish.
+try {
+  assertSelfContained(html, 'compass-error.html');
+} catch {
   process.exit(1);
 }
 
